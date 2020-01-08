@@ -12,11 +12,15 @@ async function async_func() {
     console.log('gas Price: ' + await web3.eth.getGasPrice());
     console.log('balance of contract_addr=' + await web3.eth.getBalance(CONTRACT_ADDR));
 
+    //show bytecode
+    // var bc = await web3.eth.getCode(CONTRACT_ADDR);
+    // console.dir(bc);
+
     //ABI
     const ABI = JSON.parse(fs.readFileSync('./build/contracts/Htlc.json', 'utf8'))['abi'];
     var htlc = new web3.eth.Contract(ABI, CONTRACT_ADDR);
 
-	let accounts = await web3.eth.getAccounts();
+    let accounts = await web3.eth.getAccounts();
     var payer = accounts[0];
     var payee = accounts[1];
     console.log("payer=" + payer);
@@ -27,8 +31,10 @@ async function async_func() {
 
     //sha256(001122334455667788990011223344556677889900112233445566778899aabb)
     //-->0f21c51a169a3a60dcd7a5e9ca0aead03027e3c3d36646d992145becfcf1d8d8
-    await htlc.methods.poolPayment(
+    var tx = await htlc.methods.poolPayment(
         "0x0f21c51a169a3a60dcd7a5e9ca0aead03027e3c3d36646d992145becfcf1d8d8",
         payee, 10000, 200).send({from: payer});
+    console.log("poolPayment= ");
+    console.dir(tx);
 }
 async_func();

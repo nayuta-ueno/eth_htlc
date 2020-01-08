@@ -26,7 +26,9 @@ async function async_func() {
     //-->0f21c51a169a3a60dcd7a5e9ca0aead03027e3c3d36646d992145becfcf1d8d8
     var preimage = "0x001122334455667788990011223344556677889900112233445566778899aabb";
     try {
-        await htlc.methods.payment(preimage, payee).send({from: payer});
+        tx = await htlc.methods.payment(preimage, payee).send({from: payer});
+        console.log("payment=");
+        console.dir(tx);
     } catch (err) {
         console.log("err=" + err);
         assert.isTrue(false);
