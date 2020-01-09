@@ -1,6 +1,10 @@
 pragma solidity ^0.5.0;
 
 contract Htlc {
+    //
+    //structs
+    //
+
     struct HtlcData {
         bytes32 paymentHash;        ///< paymentHash
         address payable payee;      ///< 送金先
@@ -10,8 +14,27 @@ contract Htlc {
         bool pooled;                ///< true:pool済み
     }
 
+
+    //
+    //events
+    //
+
+    event Pooled(address indexed payee, bytes32 paymentHash);
+    event Payed(address indexed payee, bytes32 preimage);
+    event Withdrawn(address indexed payee);
+
+
+    //
+    //variables
+    //
+
     //msg.senderは1つだけしかHTLCを作ることができないことにする
     mapping(address => HtlcData) htlcData;
+
+
+    //
+    //public functions
+    //
 
     //msg.senderがpayer
     function poolPayment(bytes32 _paymentHash, address payable _payee, uint _amount, uint _delay) public {
@@ -23,6 +46,7 @@ contract Htlc {
             htlcData[msg.sender].height = block.number; //miningされたときのblockNumberになるようだ
             htlcData[msg.sender].delay = _delay;
             htlcData[msg.sender].pooled = true;
+            emit Pooled(_payee, _paymentHash);
         }
     }
 
@@ -36,6 +60,7 @@ contract Htlc {
             if (_hash == htlcData[msg.sender].paymentHash) {
                 htlcData[msg.sender].payee.transfer(htlcData[msg.sender].amount);
                 htlcData[msg.sender].pooled = false;
+                emit Payed(_payee, _preImage);
             }
         }
     }
@@ -44,6 +69,7 @@ contract Htlc {
         if ( htlcData[msg.sender].pooled &&
              (block.number - htlcData[msg.sender].height > htlcData[msg.sender].delay)) {
             htlcData[msg.sender].pooled = false;
+            emit Withdrawn(htlcData[msg.sender].payee);
         } else {
             assert(false);
         }
@@ -63,7 +89,7 @@ contract Htlc {
 
     //自分がpayeeになっているかどうか
     function isPooled(address _payee) public view returns(bool) {
-        return htlcData[_payee].payee == msg.sender;
+        return htlcData[_payee].pooled && (htlcData[_payee].payee == msg.sender);
     }
 
     function getMinimumTimeout() public view returns(uint) {
